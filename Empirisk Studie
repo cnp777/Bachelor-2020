@@ -187,11 +187,11 @@ mean(result_naivevol[63,])   # naive vol -> cum. P&L mean = 6.90
 sd(result_naivevol[63,])     # naive vol -> cum. P&L std = 17.13
 
 ### t-tests 
-t.test(quad_error_vol[3,],quad_error_vol[4,], alternative = c("two.sided")) # p = 0.6974 > 0.05
-t.test(result_rkth2vol[63,],result_naivevol[63,], alternative = c("two.sided")) # p = 0.5883 > 0.05
+t.test(quad_error_vol[2,],quad_error_vol[4,], alternative = c("two.sided")) # p = 0.6332 > 0.05
+t.test(result_rv5vol[63,],result_naivevol[63,], alternative = c("two.sided")) # p = 0.6016 > 0.05
 
 ### F-test
-var.test(result_rkth2vol[63,],result_naivevol[63,], alternative = c("two.sided")) # p = 0.2466 > 0.05
+var.test(result_rv5vol[63,],result_naivevol[63,], alternative = c("two.sided")) # p = 0.1861 > 0.05
 
 
 
