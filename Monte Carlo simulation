@@ -1,0 +1,27 @@
+set.seed(25)
+N <- 10000
+m <- 1000
+T <- 1
+t <- 1/2
+tau <- T-t
+dt <- tau/(m) 
+S0 <- c(90,100,110)
+K <- 100
+r <- 0.05
+sigma <- 0.2 
+
+call_prices <- numeric(length(S0))
+
+for (j in 1:length(S0)){
+  payoff_vec <- numeric(N)
+  
+  for (i in 1:N){
+    Z <- rnorm(m, mean=0, sd=1)
+    X <- cumsum((r-1/2*sigma^2)*dt + sigma*sqrt(dt)*Z) 
+    S <- c(S0[j],S0[j]*exp(X))
+    payoff_vec[i] <- max(S[m+1]-K, 0)
+  }
+  call_prices[j] <- mean(payoff_vec)
+}
+
+exp(-r*tau)* call_prices
