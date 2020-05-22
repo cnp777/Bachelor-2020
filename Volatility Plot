@@ -1,0 +1,83 @@
+#### plot af de volatiliteter der indgår i det udleverede datasæt
+df_opt <- read.table("optionsdata.txt", header = TRUE)
+
+df_opt$Date <- as.Date(df_opt$Date)
+vol_names <- c('rv5', 'rsv', 'medrv', 'bv', 'rk_parzen','naive')
+df_opt_vol <- melt(df_opt, measure.vars = vol_names, id.vars = c('Date'))
+str(df_opt_vol)
+
+vol_opt_measures <- c('rv5', 'rsv', 'medrv', 'bv', 'rk_parzen','naive')
+df_opt_vol2 <- df_opt_vol[df_opt_vol$variable %in% vol_opt_measures, ]
+size_dummy_opt <- c(rep(0.5,nrow(df_opt_vol2)/length(vol_opt_measures) * (length(vol_opt_measures)-1)), 
+                rep(2, nrow(df_opt_vol2)/length(vol_opt_measures)))
+
+ggplot(data=df_opt_vol, aes(x=Date, y=value, color = variable)) +
+geom_line(size=size_dummy_opt) +
+xlab("Dato") +
+ylab("Værdi") +
+ggtitle("Volatilitet") +
+theme(plot.title = element_text(lineheight=0.8, face="bold",vjust=1), 
+      axis.text.x = element_text(angle = 45, hjust = 1))
+      
+#### plot af volatiliteter vi bearbejder i opgaven
+
+# data 
+optionsdata <- read.table("optionsdata.txt", header = TRUE)
+optionsdata$Date <- as.Date(optionsdata$Date)
+
+# Tilføj rk_th2 til optionsdatasættet
+OxfordMan <- read.csv2(file="OxfordManRealizedVolatilityIndices.csv",sep=",",header=TRUE, skipNul = TRUE,
+                       colClasses = c(rep("character",2),rep("character",20-2)))
+OxfordMan <- subset(OxfordMan, Symbol=='.SPX')
+names(OxfordMan)[1] <- c('date')
+OxfordMan2 <- subset(OxfordMan, select=-c(Symbol, open_to_close, open_time, close_time, nobs, open_price))
+
+# annualiser volatiliteten
+vol_an <- function(x){sqrt(as.numeric(x))*sqrt(252)}
+OxfordMan3 <- OxfordMan2[, c(1,5,2:6,7:dim(OxfordMan2)[2])]
+names(OxfordMan3)[1] <- c('Date')
+colsNum <- 2:dim(OxfordMan2)[2]
+OxfordMan3[, colsNum] <- apply(OxfordMan3[,colsNum], 2, vol_an)
+
+# lav datasæt kun med dato og rk_th2
+OxfordMan4 <- subset(OxfordMan3, select= c(Date, rk_th2))
+OxfordMan4$Date <- as.Date(OxfordMan4$Date)
+
+# forkort datasættet så datoerne matcher med optionsdata.txt 
+optionsdata$Date
+
+# Slet samples 2000-01-03:2004-03-31 og 2013-07-02:2020-05-01
+OxfordMan5 <- OxfordMan4[OxfordMan4$Date >= "2004-04-01" & OxfordMan4$Date <= "2013-07-03",]
+optionsdata <- optionsdata[optionsdata$Date >= "2004-04-01" & optionsdata$Date <= "2013-07-03",]
+
+# Merge de to datasæt
+df <- merge(optionsdata, OxfordMan5, by = "Date", all.x = TRUE)
+dim(df)[1]
+summary(df) # kun NAs i rk_th2
+sum(is.na(df$rk_th2))
+# erstat NAs
+library(zoo)
+df$rk_th2 <- na.approx(df$rk_th2)
+summary(df)
+
+### plot
+df$implied <- df$sigma
+df$Date <- as.Date(df_opt$Date)
+vol_names <- c('rv5', 'rk_th2','naive', 'implied')
+df_vol <- melt(df, measure.vars = vol_names, id.vars = c('Date'))
+str(df_vol)
+
+vol_measures <- c('rv5', 'rk_th2','naive', 'implied')
+df_vol2 <- df_vol[df_vol$variable %in% vol_measures, ]
+size_dummy <- c(rep(0.5,nrow(df_vol2)/length(vol_measures) * (length(vol_measures)-1)), 
+                rep(2, nrow(df_vol2)/length(vol_measures)))
+
+ggplot(data=df_vol, aes(x=Date, y=value, color = variable)) +
+  geom_line(size=size_dummy) +
+  xlab("Dato") +
+  ylab("Værdi") +
+  ggtitle("Volatilitet") +
+  theme(plot.title = element_text(lineheight=0.8, face="bold",vjust=1), 
+        axis.text.x = element_text(angle = 45, hjust = 1))
+
+
